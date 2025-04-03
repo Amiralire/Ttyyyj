@@ -1,0 +1,129 @@
+#!/bin/bash
+
+# Colors for output
+green='\e[32m'
+blue='\e[34m'
+reset='\e[0m'
+
+# UAE IP Ranges
+UAE_IP_RANGE1="178.250.248.0/21"
+UAE_IP_RANGE2="5.195.167.0/24"
+
+# Function to generate a random IP from a given range
+generate_random_ip() {
+    local ip_range=$1
+    local ip
+    if [[ $ip_range == "UAE_IP_RANGE1" ]]; then
+        ip1=178
+        ip2=$((250 + RANDOM % 8))
+        ip3=$((0 + RANDOM % 255))
+        ip4=$((1 + RANDOM % 254))
+        ip="$ip1.$ip2.$ip3.$ip4"
+    elif [[ $ip_range == "UAE_IP_RANGE2" ]]; then
+        ip1=5
+        ip2=195
+        ip3=167
+        ip4=$((1 + RANDOM % 254))
+        ip="$ip1.$ip2.$ip3.$ip4"
+    fi
+    echo "$ip"
+}
+
+# Function to generate a random MTU value between 1280 and 1300
+generate_random_mtu() {
+    mtu=$((1280 + RANDOM % 21))
+    echo "$mtu"
+}
+
+# Function to configure WireGuard server
+configure_wireguard() {
+    clear
+    echo -e "${blue}Configuring WireGuard Server...${reset}"
+
+    SERVER_ADDRESS=$(generate_random_ip "UAE_IP_RANGE1")
+    DNS_SERVER=$(generate_random_ip "UAE_IP_RANGE2")
+    ENDPOINT=$(generate_random_ip "UAE_IP_RANGE1")
+    MTU=$(generate_random_mtu)
+    ALLOWED_IPS=$(generate_random_ip "UAE_IP_RANGE1")
+
+    echo -e "${green}Server Address: $SERVER_ADDRESS${reset}"
+    echo -e "${green}DNS Server: $DNS_SERVER${reset}"
+    echo -e "${green}Endpoint: $ENDPOINT${reset}"
+    echo -e "${green}MTU: $MTU${reset}"
+    echo -e "${green}Allowed IPs: $ALLOWED_IPS${reset}"
+
+    WG_CONFIG_FILE="/etc/wireguard/wg0.conf"
+
+    echo -e "${blue}Saving WireGuard configuration...${reset}"
+    echo -e "[Interface]" > $WG_CONFIG_FILE
+    echo -e "Address = $SERVER_ADDRESS" >> $WG_CONFIG_FILE
+    echo -e "DNS = $DNS_SERVER" >> $WG_CONFIG_FILE
+    echo -e "MTU = $MTU" >> $WG_CONFIG_FILE
+    echo -e "PrivateKey = YOUR_PRIVATE_KEY" >> $WG_CONFIG_FILE
+    echo -e "[Peer]" >> $WG_CONFIG_FILE
+    echo -e "Endpoint = $ENDPOINT" >> $WG_CONFIG_FILE
+    echo -e "AllowedIPs = $ALLOWED_IPS/32" >> $WG_CONFIG_FILE
+
+    echo -e "${green}WireGuard Configuration Saved!${reset}"
+}
+
+# Function to generate optimized DNS servers
+generate_dns() {
+    clear
+    echo -e "${blue}Generating Optimized DNS Servers...${reset}"
+
+    DNS1=$(generate_random_ip "UAE_IP_RANGE1")
+    DNS2=$(generate_random_ip "UAE_IP_RANGE2")
+
+    echo -e "${green}Primary DNS: $DNS1${reset}"
+    echo -e "${green}Secondary DNS: $DNS2${reset}"
+
+    # Optimize DNS settings
+    echo "options timeout:1 attempts:1 rotate" > /etc/resolv.conf
+    echo "nameserver $DNS1" >> /etc/resolv.conf
+    echo "nameserver $DNS2" >> /etc/resolv.conf
+
+    echo -e "${green}Optimized DNS Settings Applied!${reset}"
+}
+
+# Function to optimize network speed
+optimize_network() {
+    clear
+    echo -e "${blue}Optimizing Network for Faster Upload & Download...${reset}"
+
+    # Enable BBR
+    echo "net.core.default_qdisc=fq" | tee -a /etc/sysctl.conf
+    echo "net.ipv4.tcp_congestion_control=bbr" | tee -a /etc/sysctl.conf
+
+    # Increase buffer sizes
+    echo "net.core.rmem_max=16777216" | tee -a /etc/sysctl.conf
+    echo "net.core.wmem_max=16777216" | tee -a /etc/sysctl.conf
+    echo "net.ipv4.tcp_rmem=4096 87380 16777216" | tee -a /etc/sysctl.conf
+    echo "net.ipv4.tcp_wmem=4096 65536 16777216" | tee -a /etc/sysctl.conf
+    echo "net.ipv4.tcp_window_scaling=1" | tee -a /etc/sysctl.conf
+
+    # Apply changes
+    sysctl -p
+
+    echo -e "${green}Network Optimization Applied Successfully!${reset}"
+}
+
+# Main Menu
+while true; do
+    clear
+    echo -e "${blue}Select an Option:${reset}"
+    echo -e "1) Configure WireGuard Server"
+    echo -e "2) Generate Optimized DNS Servers"
+    echo -e "3) Optimize Network Speed (Upload/Download)"
+    echo -e "4) Exit"
+    read -p "Enter your choice: " choice
+
+    case $choice in
+        1) configure_wireguard ;;
+        2) generate_dns ;;
+        3) optimize_network ;;
+        4) exit 0 ;;
+        *) echo -e "${red}Invalid option, please try again.${reset}" ;;
+    esac
+    read -p "Press Enter to continue..."
+done
